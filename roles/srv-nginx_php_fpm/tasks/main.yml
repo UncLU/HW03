@@ -1,0 +1,48 @@
+# tasks file for srv-nginx_php_fpm
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  become: yes
+
+- name: Configure Nginx to send PHP to PHP-FPM on port 9000
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/default
+  notify: Reload Nginx
+
+- name: Start Nginx service
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Ensure Nginx is reloaded on configuration change
+  meta: flush_handlers
+
+- name: Install PHP and PHP-FPM
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php-fpm
+    - php-cli
+  become: yes
+
+- name: Configure PHP-FPM to listen on port 9000
+  template:
+    src: php-fpm.conf.j2
+    dest: /etc/php/{{ php_version }}/fpm/pool.d/www.conf
+  notify: Restart PHP-FPM
+
+- name: Start PHP-FPM service
+  service:
+    name: php{{ php_version }}-fpm
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Ensure PHP-FPM is restarted on configuration change
+  meta: flush_handlers

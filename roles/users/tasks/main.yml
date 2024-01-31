@@ -1,0 +1,10 @@
+---
+- name: Add new user with key-based authentication
+  user:
+    name: "{{ new_username }}"
+    state: present
+    create_home: yes
+    groups: "{{ new_user_groups }}"
+    append: yes
+  become: yes
+  when: new_username is defined
